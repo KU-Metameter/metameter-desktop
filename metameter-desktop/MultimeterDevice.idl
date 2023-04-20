@@ -1,0 +1,9 @@
+namespace metameter_desktop
+{
+	runtimeclass MultimeterDevice : Windows.UI.Xaml.Data.INotifyPropertyChanged
+	{
+		MultimeterDevice(Windows.Devices.Bluetooth.BluetoothLEDevice Device, Single Voltage);
+		Windows.Devices.Bluetooth.BluetoothLEDevice Device;
+		Single Voltage;
+	}
+}
