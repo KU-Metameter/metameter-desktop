@@ -6,7 +6,7 @@ using namespace winrt::Windows::Devices::Bluetooth;
 
 namespace winrt::metameter_desktop::implementation
 {
-    MultimeterDevice::MultimeterDevice(BluetoothLEDevice Device, float Voltage) : m_device{ Device }, m_voltage{ Voltage }
+    MultimeterDevice::MultimeterDevice(BluetoothLEDevice Device, float Measurement, winrt::metameter_desktop::Mode Mode) : m_device{ Device }, m_measurement{ Measurement }, m_mode{ Mode }
     {
     }
     BluetoothLEDevice MultimeterDevice::Device()
@@ -21,14 +21,23 @@ namespace winrt::metameter_desktop::implementation
             m_propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"Device" });
         }
     }
-    float MultimeterDevice::Voltage()
+    float MultimeterDevice::Measurement()
     {
-        return m_voltage;
+        return m_measurement;
     }
-    void MultimeterDevice::Voltage(float value)
+    void MultimeterDevice::Measurement(float value)
     {
-        m_voltage = value;
-        m_propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"Voltage" });
+        m_measurement = value;
+        m_propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"Measurement" });
+    }
+    winrt::metameter_desktop::Mode MultimeterDevice::Mode()
+    {
+        return m_mode;
+    }
+    void MultimeterDevice::Mode(winrt::metameter_desktop::Mode const& value)
+    {
+        m_mode = value;
+        m_propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"Mode" });
     }
     winrt::event_token MultimeterDevice::PropertyChanged(winrt::Windows::UI::Xaml::Data::PropertyChangedEventHandler const& handler)
     {

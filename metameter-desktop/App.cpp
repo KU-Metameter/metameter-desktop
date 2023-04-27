@@ -220,9 +220,19 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                                         GattCommunicationStatus status = co_await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue::Notify);
                                         if (status == GattCommunicationStatus::Success)
                                         {
-                                            registeredCharacteristic = characteristic;
-                                            notificationsToken = registeredCharacteristic.ValueChanged({ get_weak(), &App::Characteristic_ValueChanged });
-                                            co_return;
+                                            measurementCharacteristic = characteristic;
+                                            notificationsToken = measurementCharacteristic.ValueChanged({ get_weak(), &App::Characteristic_MeasurementChanged });
+                                            // co_return;
+                                        }
+                                    }
+                                    else if (characteristic.Uuid() == guid{ 0x225A22E1, 0xE572, 0x407A, { 0x81, 0x44, 0x28, 0x3D, 0xCD, 0x49, 0x30, 0x3C } }) 
+                                    {
+                                        GattCommunicationStatus status = co_await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue::Indicate);
+                                        if (status == GattCommunicationStatus::Success)
+                                        {
+                                            modeCharacteristic = characteristic;
+                                            indicationsToken = modeCharacteristic.ValueChanged({ get_weak(), &App::Characteristic_ModeChanged });
+                                            // co_return;
                                         }
                                     }
                                 }
@@ -235,14 +245,26 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
     }
 }
 
-fire_and_forget App::Characteristic_ValueChanged(GattCharacteristic const&, GattValueChangedEventArgs args)
+fire_and_forget App::Characteristic_MeasurementChanged(GattCharacteristic const&, GattValueChangedEventArgs args)
 {
     auto lifetime = get_strong();
     co_await resume_foreground(window.Dispatcher());
-    float voltage = *(reinterpret_cast<float*>(args.CharacteristicValue().data()));
+    float measurement = *(reinterpret_cast<float*>(args.CharacteristicValue().data()));
     std::wostringstream wostringstream;
-    wostringstream << voltage << L"V\n";
+    wostringstream << measurement << L"V\n";
     OutputDebugString(wostringstream.str().c_str());
-    State::current_device.Voltage(voltage);
+    State::current_device.Measurement(measurement);
+    co_return;
+}
+
+fire_and_forget App::Characteristic_ModeChanged(GattCharacteristic const&, GattValueChangedEventArgs args)
+{
+    auto lifetime = get_strong();
+    co_await resume_foreground(window.Dispatcher());
+    winrt::metameter_desktop::Mode mode = static_cast<winrt::metameter_desktop::Mode>(*(reinterpret_cast<char*>(args.CharacteristicValue().data())));
+    State::current_device.Mode(mode);
+    std::wostringstream wostringstream;
+    wostringstream << L"Mode: " << static_cast<int>(mode) << L"\n";
+    OutputDebugString(wostringstream.str().c_str());
     co_return;
 }

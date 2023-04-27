@@ -17,7 +17,8 @@ namespace winrt::metameter_desktop::implementation
 
         void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const& e);
         void OnPropertyChanged(IInspectable sender, Windows::UI::Xaml::Data::PropertyChangedEventArgs e);
-        void OnVoltageUpdate();
+        void OnMeasurementUpdate();
+        void OnModeUpdate();
         void OnDeviceFound();
 
     };

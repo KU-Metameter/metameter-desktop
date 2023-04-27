@@ -1,9 +1,20 @@
 namespace metameter_desktop
 {
+	enum Mode {
+		None,
+		BtMenu,
+		Diode,
+		Milliamps,
+		Volts,
+		Ohms,
+		Amps,
+	};
+
 	runtimeclass MultimeterDevice : Windows.UI.Xaml.Data.INotifyPropertyChanged
 	{
-		MultimeterDevice(Windows.Devices.Bluetooth.BluetoothLEDevice Device, Single Voltage);
+		MultimeterDevice(Windows.Devices.Bluetooth.BluetoothLEDevice Device, Single Measurement, Mode Mode);
 		Windows.Devices.Bluetooth.BluetoothLEDevice Device;
-		Single Voltage;
+		Single Measurement;
+		Mode Mode;
 	}
 }
