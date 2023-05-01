@@ -223,6 +223,9 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                                         {
                                             measurementCharacteristic = characteristic;
                                             notificationsToken = measurementCharacteristic.ValueChanged({ get_weak(), &App::Characteristic_MeasurementChanged });
+                                            GattReadResult result = co_await measurementCharacteristic.ReadValueAsync(BluetoothCacheMode::Uncached);
+                                            if (result.Status() == GattCommunicationStatus::Success)
+                                                State::current_device.Measurement(*(reinterpret_cast<float*>(result.Value().data())));
                                             // co_return;
                                         }
                                     }
