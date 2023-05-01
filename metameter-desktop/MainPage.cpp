@@ -26,7 +26,11 @@ namespace winrt::metameter_desktop::implementation
     void MainPage::OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const& e)
     {
         if (State::current_device.Device() != nullptr)
-            searchStatus().Text(L"0V");
+        {
+            wchar_t out[20];
+            swprintf(out, 20, L"%.2f %.2ls", State::current_device.Measurement(), unit.c_str());
+            searchStatus().Text(winrt::to_hstring(out));
+        }
         State::current_device.PropertyChanged({ get_weak(), &MainPage::OnPropertyChanged });
     }
 
@@ -43,9 +47,15 @@ namespace winrt::metameter_desktop::implementation
     void MainPage::OnDeviceFound()
     {
         if (State::current_device.Device() != nullptr)
-            searchStatus().Text(L"0V");
+        {
+            wchar_t out[20];
+            swprintf(out, 20, L"%.2f %.2ls", State::current_device.Measurement(), unit.c_str());
+            searchStatus().Text(winrt::to_hstring(out));
+        }
         else
+        {
             searchStatus().Text(L"Searching for multimeters...");
+        }
     }
 
     void MainPage::OnMeasurementUpdate()

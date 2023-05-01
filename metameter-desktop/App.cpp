@@ -233,6 +233,9 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                                         {
                                             modeCharacteristic = characteristic;
                                             indicationsToken = modeCharacteristic.ValueChanged({ get_weak(), &App::Characteristic_ModeChanged });
+                                            GattReadResult result = co_await modeCharacteristic.ReadValueAsync(BluetoothCacheMode::Uncached);
+                                            if (result.Status() == GattCommunicationStatus::Success)
+                                                State::current_device.Mode(static_cast<winrt::metameter_desktop::Mode>(*(reinterpret_cast<char*>(result.Value().data()))));
                                             // co_return;
                                         }
                                     }
