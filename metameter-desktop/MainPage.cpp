@@ -28,7 +28,10 @@ namespace winrt::metameter_desktop::implementation
         if (State::current_device.Device() != nullptr)
         {
             wchar_t out[20];
-            swprintf(out, 20, L"%.2f %.2ls", State::current_device.Measurement(), unit.c_str());
+            if (isinf(State::current_device.Measurement()))
+                swprintf(out, 20, L"Out of Range %.2ls", unit.c_str());
+            else
+                swprintf(out, 20, L"%.2f %.2ls", State::current_device.Measurement(), unit.c_str());
             searchStatus().Text(winrt::to_hstring(out));
         }
         State::current_device.PropertyChanged({ get_weak(), &MainPage::OnPropertyChanged });
@@ -49,7 +52,10 @@ namespace winrt::metameter_desktop::implementation
         if (State::current_device.Device() != nullptr)
         {
             wchar_t out[20];
-            swprintf(out, 20, L"%.2f %.2ls", State::current_device.Measurement(), unit.c_str());
+            if (isinf(State::current_device.Measurement()))
+                swprintf(out, 20, L"Out of Range %.2ls", unit.c_str());
+            else
+                swprintf(out, 20, L"%.2f %.2ls", State::current_device.Measurement(), unit.c_str());
             searchStatus().Text(winrt::to_hstring(out));
         }
         else
@@ -63,7 +69,10 @@ namespace winrt::metameter_desktop::implementation
         if (State::current_device.Device() != nullptr)
         {
             wchar_t out[20];
-            swprintf(out, 20, L"%.2f %.2ls", State::current_device.Measurement(), unit.c_str());
+            if (isinf(State::current_device.Measurement()))
+                swprintf(out, 20, L"Out of Range %.2ls", unit.c_str());
+            else
+                swprintf(out, 20, L"%.2f %.2ls", State::current_device.Measurement(), unit.c_str());
             searchStatus().Text(winrt::to_hstring(out));
         }
     }
