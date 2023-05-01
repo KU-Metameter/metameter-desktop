@@ -44,6 +44,8 @@ namespace winrt::metameter_desktop::implementation
     {
         if (State::current_device.Device() != nullptr)
             searchStatus().Text(L"0V");
+        else
+            searchStatus().Text(L"Searching for multimeters...");
     }
 
     void MainPage::OnMeasurementUpdate()

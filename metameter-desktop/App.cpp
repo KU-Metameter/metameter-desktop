@@ -207,6 +207,7 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                         if (service.Uuid() == guid{ 0x3E83926C, 0xA0AA, 0x4261, { 0x90, 0xD4, 0xC0, 0x95, 0x85, 0xC3, 0xE7, 0x3B } })
                         {
                             State::current_device.Device(bluetoothLeDevice);
+                            connectionStatusToken = State::current_device.Device().ConnectionStatusChanged({ get_weak(), &App::ConnectionStatusChanged });
                             GattCharacteristicsResult result = co_await service.GetCharacteristicsAsync(BluetoothCacheMode::Uncached);
                             if (result.Status() == GattCommunicationStatus::Success)
                             {
@@ -267,4 +268,19 @@ fire_and_forget App::Characteristic_ModeChanged(GattCharacteristic const&, GattV
     wostringstream << L"Mode: " << static_cast<int>(mode) << L"\n";
     OutputDebugString(wostringstream.str().c_str());
     co_return;
+}
+
+fire_and_forget App::ConnectionStatusChanged(Windows::Devices::Bluetooth::BluetoothLEDevice sender, Windows::Foundation::IUnknown)
+{
+    auto lifetime = get_strong();
+    co_await resume_foreground(window.Dispatcher());
+    if (sender != State::current_device.Device())
+        co_return;
+
+    if (State::current_device.Device().ConnectionStatus() == BluetoothConnectionStatus::Disconnected)
+    {
+        OutputDebugString(L"Disconnected!\n");
+        State::current_device.Device(nullptr);
+        StartBleDeviceWatcher();
+    }
 }
