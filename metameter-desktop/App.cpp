@@ -241,6 +241,10 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                         }
                     }
                 }
+                else
+                {
+                    StartBleDeviceWatcher();
+                }
             }
         }
     }
