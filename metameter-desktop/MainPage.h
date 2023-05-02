@@ -14,7 +14,7 @@ namespace winrt::metameter_desktop::implementation
 
         int32_t MyProperty();
         void MyProperty(int32_t value);
-        void UpdateMeasurement();
+        fire_and_forget UpdateMeasurement();
         void UpdateMode();
         void UpdateContinuity();
         void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const& e);
@@ -23,6 +23,12 @@ namespace winrt::metameter_desktop::implementation
         void OnModeUpdate();
         void OnContinuityUpdate();
         fire_and_forget ModeButtonClicked(IInspectable sender, Windows::UI::Xaml::RoutedEventArgs const& e);
+        fire_and_forget CSVButtonClicked(IInspectable sender, Windows::UI::Xaml::RoutedEventArgs const& e);
+
+    private:
+        Windows::Storage::StorageFile m_tempFile{ nullptr };
+        std::chrono::time_point<std::chrono::system_clock> m_startTime;
+        bool m_recording{ false };
     };
 }
 

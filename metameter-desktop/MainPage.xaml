@@ -27,7 +27,7 @@
         <!--<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="30" Text="V" Foreground="Black"/>-->
         <Button x:Name="ohmsButton" Click="ModeButtonClicked" Background="Orange" Foreground="Black" Grid.Row="1" Grid.Column="1" Content="O" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="30"/>
         <Button x:Name="ampsButton" Click="ModeButtonClicked" Background="MediumPurple" Foreground="Black" Grid.Row="1" Grid.Column="2" Content="A" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="30"/>
-        <Button x:Name="csvButton" Click="ModeButtonClicked" Background="Blue" Foreground="Black" Grid.Row="2" Content="BT" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="30"/>
+        <Button x:Name="csvButton" Click="CSVButtonClicked" Background="Blue" Foreground="Black" Grid.Row="2" Content="CSV" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="30"/>
         <Button x:Name="diodeButton" Click="ModeButtonClicked" Background="Red" Foreground="Black" Grid.Row="2" Grid.Column="1" Content="D" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="30"/>
         <Button x:Name="milliAmpsButton" Click="ModeButtonClicked" Background="Yellow" Foreground="Black" Grid.Row="2" Grid.Column="2" Content="mA" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontSize="30"/>
     </Grid>

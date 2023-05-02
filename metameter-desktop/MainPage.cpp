@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include <sstream>
+#include <iomanip>
 #include "MainPage.h"
 #include "MainPage.g.cpp"
 #include "Configuration.h"
@@ -7,6 +8,8 @@
 using namespace winrt;
 using namespace metameter_desktop;
 using namespace Windows::Devices::Bluetooth::GenericAttributeProfile;
+using namespace Windows::Foundation;
+using namespace Windows::Globalization::DateTimeFormatting;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Data;
@@ -24,7 +27,7 @@ namespace winrt::metameter_desktop::implementation
         throw hresult_not_implemented();
     }
 
-    void MainPage::UpdateMeasurement()
+    fire_and_forget MainPage::UpdateMeasurement()
     {
         if (State::current_device.Device() != nullptr)
         {
@@ -34,6 +37,14 @@ namespace winrt::metameter_desktop::implementation
             else
                 swprintf(out, 20, L"%.2f", State::current_device.Measurement());
             measurement().Text(winrt::to_hstring(out));
+            if (m_recording && m_tempFile != nullptr)
+            {
+                std::wostringstream row;
+                const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+                auto int_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_startTime);
+                row << out << L"," << mode().Text().c_str() << L"," << int_ms.count() << L"\r\n";
+                co_await Windows::Storage::FileIO::AppendTextAsync(m_tempFile, row.str());
+            }
         }
     }
 
@@ -166,6 +177,37 @@ namespace winrt::metameter_desktop::implementation
             {
                 State::current_device.Mode(requestedMode);
             }
+        }
+    }
+
+    fire_and_forget MainPage::CSVButtonClicked(IInspectable sender, Windows::UI::Xaml::RoutedEventArgs const& e)
+    {
+        const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+        m_startTime = now;
+        const std::time_t t_c = std::chrono::system_clock::to_time_t(now);
+        std::wostringstream s;
+        std::tm tm;
+        localtime_s(&tm, &t_c);
+        s << std::put_time(&tm, L"metameter_%Y-%m-%d-%H%M%S.csv");
+        if (!m_recording)
+        {
+            csvButton().Content(box_value(L"Stop"));
+            m_recording = true;
+            Windows::Storage::StorageFolder tempFolder = Windows::Storage::ApplicationData::Current().TemporaryFolder();
+            m_tempFile = co_await tempFolder.CreateFileAsync(s.str(), Windows::Storage::CreationCollisionOption::ReplaceExisting);
+            co_await Windows::Storage::FileIO::WriteTextAsync(m_tempFile, L"Measurement,Unit,Timestamp (ms)\r\n");
+        }
+        else
+        {
+            Windows::Storage::Pickers::FileSavePicker savePicker = Windows::Storage::Pickers::FileSavePicker();
+            savePicker.FileTypeChoices().Insert(L"Comma Separated Value", winrt::single_threaded_vector<hstring>({ L".csv" }));
+            savePicker.SuggestedFileName(s.str());
+            Windows::Storage::StorageFile file = co_await savePicker.PickSaveFileAsync();
+
+            co_await m_tempFile.MoveAndReplaceAsync(file);
+            m_tempFile = nullptr;
+            csvButton().Content(box_value(L"CSV"));
+            m_recording = false;
         }
     }
 }
