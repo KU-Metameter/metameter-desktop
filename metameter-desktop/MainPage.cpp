@@ -48,6 +48,7 @@ namespace winrt::metameter_desktop::implementation
                 mode_str = L"Milliamps";
                 break;
             case Mode::Diode:
+                continuity().Visibility(Visibility::Visible);
             case Mode::Volts:
                 mode_str = L"Volts";
                 break;
@@ -62,6 +63,35 @@ namespace winrt::metameter_desktop::implementation
                 break;
             }
             mode().Text(mode_str);
+            if (State::current_device.Mode() != Mode::Diode)
+            {
+                continuity().Visibility(Visibility::Collapsed);
+                continuity().Text(L"");
+            }
+        }
+    }
+
+    void MainPage::UpdateContinuity()
+    {
+        if (State::current_device != nullptr && State::current_device.Mode() == Mode::Diode)
+        {
+            hstring continuity_string;
+            switch (State::current_device.Continuity())
+            {
+            case Continuity::Discontinuous:
+                continuity_string = L"Probably not a Diode";
+                mode().Text(L"Volts");
+                break;
+            case Continuity::Cont_Diode:
+                continuity_string = L"Probably a Diode";
+                mode().Text(L"Volts");
+                break;
+            case Continuity::Continuous:
+                continuity_string = L"Probably Continuous";
+                mode().Text(L"Ohms");
+                break;
+            }
+            continuity().Text(continuity_string);
         }
     }
 
@@ -80,6 +110,8 @@ namespace winrt::metameter_desktop::implementation
             UpdateMeasurement();
         else if (e.PropertyName() == L"Mode")
             OnModeUpdate();
+        else if (e.PropertyName() == L"Continuity")
+            OnContinuityUpdate();
     }
 
     void MainPage::OnDeviceFound()
@@ -98,6 +130,12 @@ namespace winrt::metameter_desktop::implementation
     void MainPage::OnModeUpdate()
     {
         UpdateMode();
+        UpdateMeasurement();
+    }
+
+    void MainPage::OnContinuityUpdate()
+    {
+        UpdateContinuity();
         UpdateMeasurement();
     }
 

@@ -6,7 +6,7 @@ using namespace winrt::Windows::Devices::Bluetooth;
 
 namespace winrt::metameter_desktop::implementation
 {
-    MultimeterDevice::MultimeterDevice(BluetoothLEDevice Device, float Measurement, winrt::metameter_desktop::Mode Mode, GenericAttributeProfile::GattCharacteristic ModeCharacteristic) : m_device{ Device }, m_measurement{ Measurement }, m_mode{ Mode }, m_modeCharacteristic{ ModeCharacteristic }
+    MultimeterDevice::MultimeterDevice(BluetoothLEDevice Device, float Measurement, winrt::metameter_desktop::Mode Mode, winrt::metameter_desktop::Continuity Continuity, GenericAttributeProfile::GattCharacteristic ModeCharacteristic) : m_device{ Device }, m_measurement{ Measurement }, m_mode{ Mode }, m_continuity{ Continuity }, m_modeCharacteristic { ModeCharacteristic }
     {
     }
     BluetoothLEDevice MultimeterDevice::Device()
@@ -38,6 +38,15 @@ namespace winrt::metameter_desktop::implementation
     {
         m_mode = value;
         m_propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"Mode" });
+    }
+    Continuity MultimeterDevice::Continuity()
+    {
+        return m_continuity;
+    }
+    void MultimeterDevice::Continuity(winrt::metameter_desktop::Continuity const& value)
+    {
+        m_continuity = value;
+        m_propertyChanged(*this, Windows::UI::Xaml::Data::PropertyChangedEventArgs{ L"Continuity" });
     }
     GenericAttributeProfile::GattCharacteristic MultimeterDevice::ModeCharacteristic()
     {

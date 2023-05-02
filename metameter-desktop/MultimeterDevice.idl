@@ -10,12 +10,19 @@ namespace metameter_desktop
 		Amps,
 	};
 
+	enum Continuity {
+		Discontinuous,
+		Cont_Diode,
+		Continuous,
+	};
+
 	runtimeclass MultimeterDevice : Windows.UI.Xaml.Data.INotifyPropertyChanged
 	{
-		MultimeterDevice(Windows.Devices.Bluetooth.BluetoothLEDevice Device, Single Measurement, Mode Mode, Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic ModeCharacteristic);
+		MultimeterDevice(Windows.Devices.Bluetooth.BluetoothLEDevice Device, Single Measurement, Mode Mode, Continuity Continuity, Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic ModeCharacteristic);
 		Windows.Devices.Bluetooth.BluetoothLEDevice Device;
 		Single Measurement;
 		Mode Mode;
+		Continuity Continuity;
 		Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic ModeCharacteristic;
 	}
 }

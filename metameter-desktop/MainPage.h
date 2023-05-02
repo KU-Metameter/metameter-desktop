@@ -16,10 +16,12 @@ namespace winrt::metameter_desktop::implementation
         void MyProperty(int32_t value);
         void UpdateMeasurement();
         void UpdateMode();
+        void UpdateContinuity();
         void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs const& e);
         void OnPropertyChanged(IInspectable sender, Windows::UI::Xaml::Data::PropertyChangedEventArgs e);
         void OnDeviceFound();
         void OnModeUpdate();
+        void OnContinuityUpdate();
         fire_and_forget ModeButtonClicked(IInspectable sender, Windows::UI::Xaml::RoutedEventArgs const& e);
     };
 }

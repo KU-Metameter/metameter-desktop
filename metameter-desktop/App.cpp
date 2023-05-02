@@ -225,7 +225,7 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                                         if (status == GattCommunicationStatus::Success)
                                         {
                                             measurementCharacteristic = characteristic;
-                                            notificationsToken = measurementCharacteristic.ValueChanged({ get_weak(), &App::Characteristic_MeasurementChanged });
+                                            measurementToken = measurementCharacteristic.ValueChanged({ get_weak(), &App::Characteristic_MeasurementChanged });
                                             GattReadResult result = co_await measurementCharacteristic.ReadValueAsync(BluetoothCacheMode::Uncached);
                                             if (result.Status() == GattCommunicationStatus::Success)
                                                 State::current_device.Measurement(*(reinterpret_cast<float*>(result.Value().data())));
@@ -238,10 +238,23 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                                         if (status == GattCommunicationStatus::Success)
                                         {
                                             State::current_device.ModeCharacteristic(characteristic);
-                                            indicationsToken = State::current_device.ModeCharacteristic().ValueChanged({get_weak(), &App::Characteristic_ModeChanged});
+                                            modeToken = State::current_device.ModeCharacteristic().ValueChanged({get_weak(), &App::Characteristic_ModeChanged});
                                             GattReadResult result = co_await State::current_device.ModeCharacteristic().ReadValueAsync(BluetoothCacheMode::Uncached);
                                             if (result.Status() == GattCommunicationStatus::Success)
                                                 State::current_device.Mode(static_cast<winrt::metameter_desktop::Mode>(*(reinterpret_cast<char*>(result.Value().data()))));
+                                            // co_return;
+                                        }
+                                    }
+                                    else if (characteristic.Uuid() == guid{ 0x70CB22BF, 0xEE3C, 0x4856, { 0xB8, 0x1F, 0xFE, 0x50, 0x50, 0x8B, 0x43, 0xDD } })
+                                    {
+                                        GattCommunicationStatus status = co_await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue::Indicate);
+                                        if (status == GattCommunicationStatus::Success)
+                                        {
+                                            continuityCharacteristic = characteristic;
+                                            continuityToken = continuityCharacteristic.ValueChanged({ get_weak(), &App::Characteristic_ContinuityChanged });
+                                            GattReadResult result = co_await continuityCharacteristic.ReadValueAsync(BluetoothCacheMode::Uncached);
+                                            if (result.Status() == GattCommunicationStatus::Success)
+                                                State::current_device.Continuity(static_cast<winrt::metameter_desktop::Continuity>(*(reinterpret_cast<char*>(result.Value().data()))));
                                             // co_return;
                                         }
                                     }
@@ -291,6 +304,28 @@ fire_and_forget App::Characteristic_ModeChanged(GattCharacteristic const&, GattV
     State::current_device.Mode(mode);
     co_return;
 }
+
+fire_and_forget App::Characteristic_ContinuityChanged(GattCharacteristic const&, GattValueChangedEventArgs args)
+{
+    auto lifetime = get_strong();
+    co_await resume_foreground(window.Dispatcher());
+    winrt::metameter_desktop::Continuity continuity = static_cast<winrt::metameter_desktop::Continuity>(*(reinterpret_cast<char*>(args.CharacteristicValue().data())));
+    std::wostringstream wostringstream;
+    wostringstream << L"Continuity: " << static_cast<int>(continuity) << L"\n";
+    OutputDebugString(wostringstream.str().c_str());
+
+    // update measurement as well
+    GattReadResult result = co_await measurementCharacteristic.ReadValueAsync();
+    if (result.Status() == GattCommunicationStatus::Success)
+    {
+        float measurement = *(reinterpret_cast<float*>(result.Value().data()));
+        State::current_device.Measurement(measurement);
+    }
+    State::current_device.Continuity(continuity);
+    co_return;
+
+}
+
 
 fire_and_forget App::ConnectionStatusChanged(Windows::Devices::Bluetooth::BluetoothLEDevice sender, Windows::Foundation::IUnknown)
 {

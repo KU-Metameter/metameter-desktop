@@ -19,6 +19,7 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <StackPanel Margin="16,16,0,0" Grid.ColumnSpan="3">
+            <TextBlock x:Name="continuity" FontSize="20" Visibility="Collapsed"/>
             <TextBlock x:Name="measurement" FontSize="50"/>
             <TextBlock x:Name="mode" FontSize="30"/>
         </StackPanel>
