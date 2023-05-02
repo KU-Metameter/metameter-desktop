@@ -1,0 +1,14 @@
+﻿<Page
+    x:Class="metameter_desktop.ScanningPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:metameter_desktop"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBlock Text="Scanning for Metameters" FontSize="30" TextWrapping="Wrap" Margin="8,0,8,0"/>
+        <ProgressRing IsActive="True" Margin="16,16,16,16" Height="36" Width="36" Foreground="{ThemeResource SystemBaseHighColor}"/>
+    </StackPanel>
+</Page>

@@ -2,6 +2,7 @@
 
 #include "App.h"
 #include "MainPage.h"
+#include "ScanningPage.h"
 #include "Configuration.h"
 #include <sstream>
 
@@ -85,7 +86,7 @@ void App::OnLaunched(LaunchActivatedEventArgs const& e)
                 // When the navigation stack isn't restored navigate to the first page,
                 // configuring the new page by passing required information as a navigation
                 // parameter
-                rootFrame.Navigate(xaml_typename<metameter_desktop::MainPage>(), box_value(e.Arguments()));
+                rootFrame.Navigate(xaml_typename<metameter_desktop::ScanningPage>(), box_value(e.Arguments()));
             }
             // Place the frame in the current Window
             Window::Current().Content(rootFrame);
@@ -103,7 +104,7 @@ void App::OnLaunched(LaunchActivatedEventArgs const& e)
                 // When the navigation stack isn't restored navigate to the first page,
                 // configuring the new page by passing required information as a navigation
                 // parameter
-                rootFrame.Navigate(xaml_typename<metameter_desktop::MainPage>(), box_value(e.Arguments()));
+                rootFrame.Navigate(xaml_typename<metameter_desktop::ScanningPage>(), box_value(e.Arguments()));
             }
             // Ensure the current window is active
             Window::Current().Activate();
@@ -245,6 +246,7 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                                         }
                                     }
                                 }
+                                Window::Current().Content().try_as<Frame>().Navigate(xaml_typename<metameter_desktop::MainPage>(), winrt::Windows::UI::Xaml::Media::Animation::DrillInNavigationTransitionInfo::DrillInNavigationTransitionInfo());
                             }
                         }
                     }
@@ -303,5 +305,6 @@ fire_and_forget App::ConnectionStatusChanged(Windows::Devices::Bluetooth::Blueto
         State::current_device.Device(nullptr);
         State::current_device.ModeCharacteristic(nullptr);
         StartBleDeviceWatcher();
+        Window::Current().Content().try_as<Frame>().Navigate(xaml_typename<metameter_desktop::ScanningPage>(), winrt::Windows::UI::Xaml::Media::Animation::DrillInNavigationTransitionInfo::DrillInNavigationTransitionInfo());
     }
 }
