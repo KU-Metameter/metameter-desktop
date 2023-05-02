@@ -203,8 +203,8 @@ namespace winrt::metameter_desktop::implementation
             savePicker.FileTypeChoices().Insert(L"Comma Separated Value", winrt::single_threaded_vector<hstring>({ L".csv" }));
             savePicker.SuggestedFileName(s.str());
             Windows::Storage::StorageFile file = co_await savePicker.PickSaveFileAsync();
-
-            co_await m_tempFile.MoveAndReplaceAsync(file);
+            if (file != nullptr)
+                co_await m_tempFile.MoveAndReplaceAsync(file);
             m_tempFile = nullptr;
             csvButton().Content(box_value(L"CSV"));
             m_recording = false;
