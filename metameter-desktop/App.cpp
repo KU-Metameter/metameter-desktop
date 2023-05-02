@@ -13,6 +13,7 @@ using namespace Windows::Devices::Bluetooth::GenericAttributeProfile;
 using namespace Windows::Devices::Enumeration;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
+using namespace Windows::UI::ViewManagement;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Navigation;
@@ -46,13 +47,21 @@ App::App()
 /// <param name="e">Details about the launch request and process.</param>
 void App::OnLaunched(LaunchActivatedEventArgs const& e)
 {
+    // set window member variable
+    window = Window::Current();
+    if (deviceWatcher == nullptr)
+    {
+        StartBleDeviceWatcher();
+    }
     Frame rootFrame{ nullptr };
     auto content = Window::Current().Content();
     if (content)
     {
         rootFrame = content.try_as<Frame>();
     }
-
+    ApplicationView::PreferredLaunchWindowingMode(ApplicationViewWindowingMode::PreferredLaunchViewSize);
+    ApplicationView::PreferredLaunchViewSize({ 320, 560 });
+    ApplicationView::GetForCurrentView().SetPreferredMinSize({ 320, 560 });
     // Do not repeat app initialization when the Window already has content,
     // just ensure that the window is active
     if (rootFrame == nullptr)
@@ -100,13 +109,6 @@ void App::OnLaunched(LaunchActivatedEventArgs const& e)
             Window::Current().Activate();
         }
     }
-    if (deviceWatcher == nullptr)
-    {
-        StartBleDeviceWatcher();
-    }
-
-    // set window member variable
-    window = Window::Current();
 }
 
 /// <summary>
@@ -234,9 +236,9 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                                         GattCommunicationStatus status = co_await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(GattClientCharacteristicConfigurationDescriptorValue::Indicate);
                                         if (status == GattCommunicationStatus::Success)
                                         {
-                                            modeCharacteristic = characteristic;
-                                            indicationsToken = modeCharacteristic.ValueChanged({ get_weak(), &App::Characteristic_ModeChanged });
-                                            GattReadResult result = co_await modeCharacteristic.ReadValueAsync(BluetoothCacheMode::Uncached);
+                                            State::current_device.ModeCharacteristic(characteristic);
+                                            indicationsToken = State::current_device.ModeCharacteristic().ValueChanged({get_weak(), &App::Characteristic_ModeChanged});
+                                            GattReadResult result = co_await State::current_device.ModeCharacteristic().ReadValueAsync(BluetoothCacheMode::Uncached);
                                             if (result.Status() == GattCommunicationStatus::Success)
                                                 State::current_device.Mode(static_cast<winrt::metameter_desktop::Mode>(*(reinterpret_cast<char*>(result.Value().data()))));
                                             // co_return;
@@ -273,10 +275,18 @@ fire_and_forget App::Characteristic_ModeChanged(GattCharacteristic const&, GattV
     auto lifetime = get_strong();
     co_await resume_foreground(window.Dispatcher());
     winrt::metameter_desktop::Mode mode = static_cast<winrt::metameter_desktop::Mode>(*(reinterpret_cast<char*>(args.CharacteristicValue().data())));
-    State::current_device.Mode(mode);
     std::wostringstream wostringstream;
     wostringstream << L"Mode: " << static_cast<int>(mode) << L"\n";
     OutputDebugString(wostringstream.str().c_str());
+
+    // update measurement as well
+    GattReadResult result = co_await measurementCharacteristic.ReadValueAsync();
+    if (result.Status() == GattCommunicationStatus::Success)
+    {
+        float measurement = *(reinterpret_cast<float*>(result.Value().data()));
+        State::current_device.Measurement(measurement);
+    }
+    State::current_device.Mode(mode);
     co_return;
 }
 
@@ -291,6 +301,7 @@ fire_and_forget App::ConnectionStatusChanged(Windows::Devices::Bluetooth::Blueto
     {
         OutputDebugString(L"Disconnected!\n");
         State::current_device.Device(nullptr);
+        State::current_device.ModeCharacteristic(nullptr);
         StartBleDeviceWatcher();
     }
 }

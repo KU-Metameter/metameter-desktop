@@ -12,9 +12,10 @@ namespace metameter_desktop
 
 	runtimeclass MultimeterDevice : Windows.UI.Xaml.Data.INotifyPropertyChanged
 	{
-		MultimeterDevice(Windows.Devices.Bluetooth.BluetoothLEDevice Device, Single Measurement, Mode Mode);
+		MultimeterDevice(Windows.Devices.Bluetooth.BluetoothLEDevice Device, Single Measurement, Mode Mode, Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic ModeCharacteristic);
 		Windows.Devices.Bluetooth.BluetoothLEDevice Device;
 		Single Measurement;
 		Mode Mode;
+		Windows.Devices.Bluetooth.GenericAttributeProfile.GattCharacteristic ModeCharacteristic;
 	}
 }
