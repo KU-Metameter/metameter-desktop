@@ -39,6 +39,17 @@ App::App()
         }
     });
 #endif
+    // Additional properties we would like about the device.
+    // Property strings are documented here https://msdn.microsoft.com/en-us/library/windows/desktop/ff521659(v=vs.85).aspx
+    auto requestedProperties = single_threaded_vector<hstring>({ L"System.Devices.Aep.DeviceAddress", L"System.Devices.Aep.IsConnected", L"System.Devices.Aep.Bluetooth.Le.IsConnectable" });
+
+    // BT_Code: Example showing paired and non-paired in a single query.
+    hstring aqsAllBluetoothLEDevices = L"(System.Devices.Aep.ProtocolId:=\"{bb7bb05e-5972-42b5-94fc-76eaa7084d49}\")";
+    deviceWatcher =
+        DeviceInformation::CreateWatcher(
+            aqsAllBluetoothLEDevices,
+            requestedProperties,
+            DeviceInformationKind::AssociationEndpoint);
 }
 
 /// <summary>
@@ -50,10 +61,7 @@ void App::OnLaunched(LaunchActivatedEventArgs const& e)
 {
     // set window member variable
     window = Window::Current();
-    if (deviceWatcher == nullptr)
-    {
-        StartBleDeviceWatcher();
-    }
+    StartBleDeviceWatcher();
     Frame rootFrame{ nullptr };
     auto content = Window::Current().Content();
     if (content)
@@ -136,34 +144,30 @@ void App::OnNavigationFailed(IInspectable const&, NavigationFailedEventArgs cons
 
 void App::StartBleDeviceWatcher()
 {
-    // Additional properties we would like about the device.
-    // Property strings are documented here https://msdn.microsoft.com/en-us/library/windows/desktop/ff521659(v=vs.85).aspx
-    auto requestedProperties = single_threaded_vector<hstring>({ L"System.Devices.Aep.DeviceAddress", L"System.Devices.Aep.IsConnected", L"System.Devices.Aep.Bluetooth.Le.IsConnectable" });
-
-    // BT_Code: Example showing paired and non-paired in a single query.
-    hstring aqsAllBluetoothLEDevices = L"(System.Devices.Aep.ProtocolId:=\"{bb7bb05e-5972-42b5-94fc-76eaa7084d49}\")";
-
-    deviceWatcher =
-        DeviceInformation::CreateWatcher(
-            aqsAllBluetoothLEDevices,
-            requestedProperties,
-            DeviceInformationKind::AssociationEndpoint);
-
     // Register event handlers before starting the watcher.
     deviceWatcherAddedToken = deviceWatcher.Added({ get_weak(), &App::DeviceWatcher_Added });
     deviceWatcherUpdatedToken = deviceWatcher.Updated([](DeviceWatcher, DeviceInformationUpdate) {});
     deviceWatcherRemovedToken = deviceWatcher.Removed([](DeviceWatcher, DeviceInformationUpdate) {});
     deviceWatcherEnumerationCompletedToken = deviceWatcher.EnumerationCompleted([](DeviceWatcher, IInspectable const&) {});
-    deviceWatcherStoppedToken = deviceWatcher.Stopped([](DeviceWatcher, IInspectable const&) {});
+    if (deviceWatcher.Status() == DeviceWatcherStatus::Stopping)
+    {
+        deviceWatcherStoppedToken = deviceWatcher.Stopped([this](DeviceWatcher, IInspectable const&) {
+            deviceWatcher.Stopped(deviceWatcherStoppedToken);
+            OutputDebugStringW(L"Started Device Enumeration\n");
+            deviceWatcher.Start();
+        });
+    }
+    else
+    {
+        // Start the watcher. Active enumeration is limited to approximately 30 seconds.
+        // This limits power usage and reduces interference with other Bluetooth activities.
+        // To monitor for the presence of Bluetooth LE devices for an extended period,
+        // use the BluetoothLEAdvertisementWatcher runtime class. See the BluetoothAdvertisement
+        // sample for an example.
+        OutputDebugStringW(L"Started Device Enumeration\n");
+        deviceWatcher.Start();
+    }
 
-
-    // Start the watcher. Active enumeration is limited to approximately 30 seconds.
-    // This limits power usage and reduces interference with other Bluetooth activities.
-    // To monitor for the presence of Bluetooth LE devices for an extended period,
-    // use the BluetoothLEAdvertisementWatcher runtime class. See the BluetoothAdvertisement
-    // sample for an example.
-    OutputDebugStringW(L"Started Device Enumeration\n");
-    deviceWatcher.Start();
 }
 
 void App::StopBleDeviceWatcher()
@@ -175,11 +179,16 @@ void App::StopBleDeviceWatcher()
         deviceWatcher.Updated(deviceWatcherUpdatedToken);
         deviceWatcher.Removed(deviceWatcherRemovedToken);
         deviceWatcher.EnumerationCompleted(deviceWatcherEnumerationCompletedToken);
-        deviceWatcher.Stopped(deviceWatcherStoppedToken);
 
         // Stop the watcher.
-        deviceWatcher.Stop();
-        deviceWatcher = nullptr;
+        if (deviceWatcher.Status() == DeviceWatcherStatus::Stopping)
+        {
+            deviceWatcher.Stopped(deviceWatcherStoppedToken);
+        }
+        else if (deviceWatcher.Status() != DeviceWatcherStatus::Stopped)
+        {
+            deviceWatcher.Stop();
+        }
     }
 }
 
@@ -195,7 +204,6 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
         // Get a specific Bluetooth LE object so we can check the GATT services available
         if (deviceInfo.Name() == L"Metameter")
         {
-            StopBleDeviceWatcher();
             BluetoothLEDevice bluetoothLeDevice = co_await BluetoothLEDevice::FromIdAsync(deviceInfo.Id());
             if (bluetoothLeDevice != nullptr)
             {
@@ -203,6 +211,7 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                 OutputDebugStringW((L"GATT STATUS: " + to_hstring(static_cast<int>(result.Status())) + L" Device " + deviceInfo.Id() + deviceInfo.Name() + L"\n").c_str());
                 if (result.Status() == GattCommunicationStatus::Success)
                 {
+                    StopBleDeviceWatcher();
                     IVectorView<GattDeviceService> services = result.Services();
                     for (auto&& service : services)
                     {
@@ -263,10 +272,6 @@ fire_and_forget App::DeviceWatcher_Added(DeviceWatcher sender, DeviceInformation
                             }
                         }
                     }
-                }
-                else
-                {
-                    StartBleDeviceWatcher();
                 }
             }
         }
